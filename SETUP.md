@@ -19,6 +19,8 @@ npm install
 
 > Se usa la plantilla `react` (JavaScript), **no** `react-ts`.
 
+**Ya está hecho.** Esta sección queda como referencia de cómo se generó la base.
+
 ## 3. Dependencias
 
 ### Runtime
@@ -44,8 +46,12 @@ npm install -D @tanstack/react-query-devtools
 | Paquete | Versión | Rol |
 |---|---|---|
 | `vite` | 8.2.2 | Build (viene con la plantilla) |
-| `@vitejs/plugin-react` | 6.1.1 | Fast Refresh (viene con la plantilla) |
+| `@vitejs/plugin-react` | 6.1.0 | Fast Refresh (viene con la plantilla) |
+| `oxlint` | 1.79.0 | Linter (viene con la plantilla) |
 | `@tanstack/react-query-devtools` | 5.102.8 | Inspección del cache en dev |
+
+La plantilla trae también `@types/react` y `@types/react-dom`. **Se quitaron**: el repo es
+JS nativo y no hay TypeScript que los consuma.
 
 ### Deliberadamente NO instaladas
 
@@ -318,4 +324,5 @@ Base: `VITE_API_URL` (`http://localhost:8000/api/v1`). Los endpoints de negocio 
 npm run dev       # servidor de desarrollo
 npm run build     # build de producción a dist/
 npm run preview   # sirve el build para verificarlo
+npm run lint      # oxlint sobre el proyecto
 ```
