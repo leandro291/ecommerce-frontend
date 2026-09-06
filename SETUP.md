@@ -151,8 +151,7 @@ negocio, no con qué librería está hecho.
     │   │       ├── CategoryListPage.jsx
     │   │       └── CategoryDetailPage.jsx
     │   ├── products/            # misma estructura interna
-    │   ├── roles/               # misma estructura interna
-    │   └── users/               # PENDIENTE: el CRUD de users no está en el yaml
+    │   └── roles/               # misma estructura interna
     │
     ├── components/              # Compartido entre 2+ features
     │   ├── ui/                  # Button, Input, Modal, Badge, Spinner...
@@ -164,8 +163,9 @@ negocio, no con qué librería está hecho.
 
 ### Reglas de la estructura
 
-1. **Un directorio en `features/` por módulo de la API.** No se crean features que no
-   correspondan a un recurso del backend.
+1. **Un directorio en `features/` por módulo de la API.** Hoy son cuatro: `auth`,
+   `categories`, `products` y `roles`. No se crean features que no correspondan a un
+   recurso del backend.
 2. **Nada sube a `components/` hasta que lo use un segundo feature.** Regla de dos: la
    primera vez vive dentro del feature, la segunda vez se promueve.
 3. **Un feature no importa de otro feature.** Si `products` necesita categorías para un
@@ -275,7 +275,6 @@ Base: `VITE_API_URL` (`http://localhost:8000/api/v1`). Los endpoints de negocio 
 | **categories** | `GET/POST /categories/` · `GET/PUT/PATCH/DELETE /categories/{id}/` | `is_active`, `name`, `search`, `ordering`, `page` |
 | **products** | `GET/POST /products/` · `GET/PUT/PATCH/DELETE /products/{id}/` | `category`, `in_stock`, `is_active`, `price_min`, `price_max`, `search`, `ordering`, `page` |
 | **roles** | `GET/POST /roles/` · `GET/PUT/PATCH/DELETE /roles/{id}/` | `code`, `name`, `search`, `ordering`, `page` |
-| **users** | — | **Pendiente: no está en el yaml** |
 
 ### Auth (SimpleJWT)
 

@@ -86,10 +86,13 @@ Viven en `.claude/agents/`. Se invocan con la herramienta `Agent`.
 
 ## Estado actual de la API
 
-- **Disponible:** `auth` (login, refresh, register), `categories`, `products`, `roles`.
-- **Auth resuelta.** SimpleJWT sobre `/api/v1/auth/`. El login es **por email**, no por
-  username. Los 18 endpoints de negocio exigen `Authorization: Bearer <access>`;
-  `register` es público.
-- **Pendiente:** el CRUD de `users` (listar, ver, editar, borrar usuarios) todavía no está
-  en el schema. `auth/register/` crea cuentas, pero no reemplaza al módulo. Se construirá
-  cuando llegue el yaml con esos endpoints.
+El contrato está completo. Cuatro módulos, 21 operaciones:
+
+- **`auth`** — login, refresh, register. El login es **por email**, no por username.
+- **`categories`**, **`products`**, **`roles`** — CRUD completo, listas paginadas.
+
+Los usuarios se crean por `auth/register/` y **no hay CRUD de users**: no se listan, editan
+ni borran desde el frontend. El rol lo asigna el backend. No construir pantallas de
+administración de usuarios.
+
+Los 18 endpoints de negocio exigen `Authorization: Bearer <access>`; `register` es público.

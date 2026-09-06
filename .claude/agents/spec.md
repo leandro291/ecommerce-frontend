@@ -34,7 +34,7 @@ documentación de lo construido.
 
 - **Estado:** Borrador | Aprobado | Implementado
 - **Fecha:** YYYY-MM-DD
-- **Módulos de la API:** categories | products | roles | users
+- **Módulos de la API:** auth | categories | products | roles
 
 ## 1. Objetivo
 Qué gana el usuario, en 2–3 frases. En lenguaje de negocio, no técnico.
