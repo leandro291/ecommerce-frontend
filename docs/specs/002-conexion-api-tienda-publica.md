@@ -16,8 +16,9 @@ Cada pantalla dice si está cargando, si falló o si no hay resultados.
 ### Entra
 
 > **La capa de datos base ya está.** `src/lib/apiClient.js`, `ApiError.js`, `tokenStore.js`,
-> `src/app/queryClient.js` y los providers de `main.jsx` los construyó el **spec 003**
-> (sus tareas T1–T5, T8), que se ejecutó antes. Este spec los consume tal cual están.
+> el `QueryClient` (creado en `src/main.jsx`) y los providers de `main.jsx` los construyó el
+> **spec 003** (sus tareas T1–T5, T8), que se ejecutó antes. Este spec los consume tal cual
+> están. El cliente de queries se obtiene con `useQueryClient()`, no importando un módulo.
 
 - `features/categories/api/` + `queries/`: listar categorías.
 - `features/products/api/` + `queries/`: listar productos y traer uno por id.
@@ -98,8 +99,8 @@ Todas las rutas ya están previstas en la estructura de `SETUP.md` (`lib/`, `app
 `features/*/api/`, `features/*/queries/`). **No hace falta ninguna carpeta nueva y `SETUP.md`
 no se modifica.**
 
-`src/lib/ApiError.js`, `src/lib/tokenStore.js`, `src/lib/apiClient.js`, `src/app/queryClient.js`
-y `src/main.jsx` **no aparecen en esta tabla**: los provee el spec 003, ya ejecutado.
+`src/lib/ApiError.js`, `src/lib/tokenStore.js`, `src/lib/apiClient.js` y `src/main.jsx` (que crea
+el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejecutado.
 
 | Ruta | Acción | Responsabilidad |
 |---|---|---|
@@ -122,8 +123,9 @@ y `src/main.jsx` **no aparecen en esta tabla**: los provee el spec 003, ya ejecu
 ## 5. Tareas
 
 - [x] **T1–T5 — Capa de datos base: las provee el spec 003.** `ApiError.js`, `tokenStore.js`,
-  `apiClient.js` (con el refresh deduplicado completo), `queryClient.js` y los providers de
-  `main.jsx` ya existen en el repo. No hay nada que crear acá: la numeración arranca en T6
+  `apiClient.js` (con el refresh deduplicado completo), el `QueryClient` (creado en `main.jsx`)
+  y los providers de `main.jsx` ya existen en el repo. No hay nada que crear acá: la numeración
+  arranca en T6
   para no mover las referencias del resto del documento.
 
 - [ ] **T6 — API de categorías**

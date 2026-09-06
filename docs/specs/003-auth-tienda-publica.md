@@ -21,8 +21,8 @@ hacerse auth primero, esas cinco tareas se mueven acá y 002 queda consumiéndol
 
 ### Entra
 
-- `src/lib/ApiError.js`, `src/lib/tokenStore.js`, `src/lib/apiClient.js`,
-  `src/app/queryClient.js` y los providers en `main.jsx`.
+- `src/lib/ApiError.js`, `src/lib/tokenStore.js`, `src/lib/apiClient.js`, y el `QueryClient`
+  más los providers en `main.jsx`.
 - El **flujo de refresco completo** de `SETUP.md` §7: 401 → un solo refresh (deduplicado entre
   peticiones paralelas) → reintento de la petición original → si el refresh falla,
   `tokenStore.clear()` y salida a `/login`.
@@ -112,7 +112,7 @@ Todas las rutas están previstas en `SETUP.md` §6. **No se crea ninguna carpeta
 | `src/lib/ApiError.js` | crear | `class ApiError extends Error` con `status` y `data` |
 | `src/lib/tokenStore.js` | crear | Único módulo que lee/escribe las claves de sesión en `localStorage`: los dos tokens y el blob `ecommerce.user` |
 | `src/lib/apiClient.js` | crear | Wrapper de `fetch`: base URL, params, `Authorization`, refresh deduplicado, `ApiError`, `null` en 204 |
-| `src/app/queryClient.js` | crear | `QueryClient` con los `defaultOptions` de `SETUP.md` §7 |
+| `src/main.jsx` | editar | Crear el `QueryClient` con los `defaultOptions` de `SETUP.md` §7 (post-impl: inline, ya no `src/app/queryClient.js`) |
 | `src/main.jsx` | editar | Envolver el router en `QueryClientProvider` + `SessionProvider` |
 | `src/features/auth/api/authApi.js` | crear | `login({email, password})`, `register(datos)`. Funciones async puras |
 | `src/features/auth/queries/useSession.js` | crear | `SessionProvider` + `useSession()`: `user`, `initials`, `isAuthenticated`, `signIn`, `signOut` |
@@ -163,8 +163,10 @@ Cuatro decisiones de estructura, para que no sorprendan en review:
     `null`; con `ecommerce.user` seteado a mano en `"{"` el getter devuelve `null` sin lanzar.
 
 - [x] **T3 — QueryClient**
-  - Archivo: `src/app/queryClient.js`
-  - Qué hace: exporta la instancia con los `defaultOptions` de `SETUP.md` §7 (`staleTime`
+  - Archivo: `src/main.jsx` _(post-implementación, 2026-09-06: el usuario pidió inlinear la
+    instancia en `main.jsx` y borrar `src/app/queryClient.js`; SETUP.md §6 y §7 actualizados.
+    Quien necesite el cliente en un hook lo toma con `useQueryClient()`.)_
+  - Qué hace: crea la instancia con los `defaultOptions` de `SETUP.md` §7 (`staleTime`
     60 s, sin retry ante 4xx, sin `refetchOnWindowFocus`).
   - Hecho cuando: una query que recibe 404 dispara una sola request; una que recibe 500
     reintenta hasta dos veces.

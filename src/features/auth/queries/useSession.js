@@ -1,5 +1,5 @@
 import { createContext, createElement, useContext, useMemo, useState } from "react"
-import { queryClient } from "../../../app/queryClient"
+import { useQueryClient } from "@tanstack/react-query"
 import { tokenStore } from "../../../lib/tokenStore"
 
 // Estado de cliente, no una query: no hay endpoint que devuelva el usuario actual.
@@ -17,6 +17,7 @@ function initialsOf(user) {
 }
 
 export function SessionProvider({ children }) {
+  const queryClient = useQueryClient()
   const [session, setSession] = useState(() => ({
     user: tokenStore.user,
     isAuthenticated: Boolean(tokenStore.access),
@@ -38,7 +39,7 @@ export function SessionProvider({ children }) {
         setSession({ user: null, isAuthenticated: false })
       },
     }),
-    [session],
+    [session, queryClient],
   )
 
   // createElement y no JSX: SETUP.md §6 reserva este archivo como `.js`.

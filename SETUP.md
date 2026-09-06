@@ -117,12 +117,11 @@ negocio, no con qué librería está hecho.
 │   ├── specs/                   # Specs SDD aprobados, uno por funcionalidad
 │   └── design/                  # Maquetas de referencia (ver su README.md)
 └── src/
-    ├── main.jsx                 # Punto de entrada: providers + router
+    ├── main.jsx                 # Punto de entrada: crea el QueryClient, monta providers + router
     ├── index.css                # @import "tailwindcss" + @theme
     │
     ├── app/
     │   ├── router.jsx           # Definición de rutas (React Router)
-    │   ├── queryClient.js       # QueryClient con sus defaultOptions
     │   └── ProtectedRoute.jsx   # Guarda: sin sesión, redirige a /login
     │
     ├── lib/
@@ -210,12 +209,14 @@ negocio, no con qué librería está hecho.
 - Convertir cualquier respuesta no-ok en un `ApiError` con `status` y el detalle del backend.
 - Devolver `null` en 204 (los `DELETE` de la API responden 204 sin cuerpo).
 
-### `app/queryClient.js`
+### El `QueryClient` (en `main.jsx`)
+
+La instancia se crea en `src/main.jsx`, junto al resto del montaje de providers, y se
+pasa al `<QueryClientProvider>`. No vive en un módulo aparte: quien necesite el cliente
+dentro de un componente o hook lo obtiene con `useQueryClient()`.
 
 ```js
-import { QueryClient } from '@tanstack/react-query'
-
-export const queryClient = new QueryClient({
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000,      // el catálogo no cambia cada segundo
