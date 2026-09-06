@@ -114,7 +114,8 @@ negocio, no con qué librería está hecho.
 │   └── agents/                  # orquestador, spec, developer, reviewer
 ├── docs/
 │   ├── ecommerce-api.yaml       # Contrato OpenAPI: única fuente de verdad
-│   └── specs/                   # Specs SDD aprobados, uno por funcionalidad
+│   ├── specs/                   # Specs SDD aprobados, uno por funcionalidad
+│   └── design/                  # Maquetas de referencia (ver su README.md)
 └── src/
     ├── main.jsx                 # Punto de entrada: providers + router
     ├── index.css                # @import "tailwindcss" + @theme
@@ -184,6 +185,9 @@ negocio, no con qué librería está hecho.
 
    Un componente nunca llama a `fetch` ni a `api/` directo: siempre pasa por `queries/`.
 5. **`api/` no conoce React.** Son funciones async puras, testeables sin renderizar nada.
+6. **`docs/design/` no es código.** Son maquetas `.dc.html` de referencia visual: no se
+   importan desde `src/`, no se compilan y no entran al bundle. Se leen antes de construir
+   una pantalla; el detalle está en [`docs/design/README.md`](./docs/design/README.md).
 
 ---
 

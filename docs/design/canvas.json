@@ -1,0 +1,25 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 2900, "title": "1 · Landing", "is_interactive": true },
+    { "file": "Catalogo.dc.html", "x": 1600, "y": 0, "w": 1440, "h": 2200, "title": "2 · Catálogo con filtros", "is_interactive": true },
+    { "file": "Producto.dc.html", "x": 3200, "y": 0, "w": 1440, "h": 2000, "title": "3 · Detalle de producto", "is_interactive": true },
+    { "file": "Movil.dc.html", "x": 0, "y": 3060, "w": 390, "h": 2600, "title": "Landing · móvil 390", "is_interactive": true }
+  ],
+  "annotations": [
+    {
+      "id": "flujo",
+      "x": 0,
+      "y": -300,
+      "w": 700,
+      "text": "Flujo: Landing → Catálogo (sidebar de filtros + resultados) → Detalle.\nLos artboards no navegan entre sí: cada uno es una pantalla aparte.\n\nQué funciona de verdad adentro de cada uno: búsqueda, filtro por categoría,\nrango de precio, solo-con-stock, orden, paginación, wishlist, miniaturas\ny el menú de Cuenta (Iniciar sesión / Crear cuenta)."
+    },
+    {
+      "id": "datos",
+      "x": 760,
+      "y": -300,
+      "w": 660,
+      "text": "Datos de muestra. Solo campos que existen en ecommerce-api.yaml:\nname, description, price (string), stock, is_active, image_url,\ncategory {id,name,slug}, updated_at.\n\nNo hay rating, marca, descuentos ni variantes de color: por eso no hay\nestrellas, reseñas ni etiquetas de oferta. El badge amarillo sale de stock <= 5.\nEl filtro de categoría es de a una (?category=id), no multiselección.\n\nCompletar: [MARCA], la bajada del hero, contacto y el destino de \"Consultar\"."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
