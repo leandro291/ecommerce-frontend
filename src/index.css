@@ -1,1 +1,52 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+
+  --color-bg: #080808;
+  --color-surface: #18181c;
+  --color-surface-2: #101014;
+  --color-shot: #0e0e12;
+  --color-line: #23232a;
+  --color-line-2: #2a2a31;
+  --color-line-3: #2f2f38;
+  --color-line-hover: #3d3d47;
+  --color-fg: #ffffff;
+  --color-fg-soft: #e6e6ea;
+  --color-muted: #8e8e97;
+  --color-faint: #9a9aa3;
+  --color-faint-2: #8a8a93;
+  --color-icon: #d6d6db;
+  --color-acc: #dfe31d;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Caja de imagen placeholder: la API tiene una sola image_url (o vacía). */
+@utility img-ph {
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(223, 227, 29, 0.16) 0%,
+      rgba(8, 8, 8, 0) 68%
+    ),
+    var(--color-shot);
+}
