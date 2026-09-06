@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="mx-auto flex max-w-[1280px] flex-col gap-10 px-5 py-12 md:flex-row md:items-start md:justify-between md:px-10">
         <div>
           <span className="mb-3 block font-display text-[19px] font-bold -tracking-[0.03em]">
-            [MARCA]
+            LeoTech
           </span>
           <p className="text-sm text-faint">
             Precios en soles (S/), IGV incluido.

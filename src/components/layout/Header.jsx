@@ -18,7 +18,7 @@ export default function Header() {
           to="/"
           className="rounded font-display text-[19px] font-bold -tracking-[0.03em] text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc md:text-[21px]"
         >
-          [MARCA]
+          LeoTech
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
