@@ -30,6 +30,9 @@ export default function AccountMenu() {
     }
   }, [open])
 
+  // VITE_API_URL termina en /api/v1; el path absoluto /admin/ reemplaza todo el path.
+  const adminUrl = new URL("/admin/", import.meta.env.VITE_API_URL).href
+
   const linkClass =
     "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] font-medium text-fg transition hover:bg-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc"
 
@@ -78,6 +81,17 @@ export default function AccountMenu() {
                 {user?.email}
               </p>
               <div className="mx-3 mb-2 h-px bg-line-2" />
+              {/* El admin de Django vive en el backend (otro origen): <a>, no <Link>.
+                  El gate es el propio login de Django; acá solo lo mostramos con sesión. */}
+              <a
+                href={adminUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setOpen(false)}
+                className={linkClass}
+              >
+                Administración
+              </a>
               <button
                 type="button"
                 onClick={handleSignOut}
