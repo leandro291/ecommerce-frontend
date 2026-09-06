@@ -249,19 +249,29 @@ Tras una mutación se invalida el nivel más chico que alcance: crear o borrar i
 
 ### `lib/tokenStore.js`
 
-Único módulo que toca el almacenamiento de tokens. Nadie más lee ni escribe esas claves.
+Único módulo que toca el almacenamiento de sesión. Nadie más lee ni escribe esas claves.
+Son tres: los dos tokens y un blob JSON con la identidad visible del usuario.
 
 ```js
 const ACCESS = 'ecommerce.access'
 const REFRESH = 'ecommerce.refresh'
+const USER = 'ecommerce.user'     // { email, first_name, last_name }
 
 export const tokenStore = {
   get access() { return localStorage.getItem(ACCESS) },
   get refresh() { return localStorage.getItem(REFRESH) },
-  save({ access, refresh }) { /* guarda las que vengan */ },
-  clear() { localStorage.removeItem(ACCESS); localStorage.removeItem(REFRESH) },
+  get user() { /* JSON.parse con try/catch: null si está corrupto */ },
+  save({ access, refresh, user }) { /* guarda solo las que vengan */ },
+  clear() { /* borra las tres */ },
 }
 ```
+
+**Por qué `ecommerce.user`:** el login solo devuelve `access` y `refresh`, y el yaml no
+tiene `GET /auth/me/`. El único momento en que el backend manda `first_name` / `last_name`
+es la respuesta del registro, así que la identidad que dibuja el avatar se persiste en el
+cliente. Un blob y no tres claves sueltas: se guarda, se limpia y se migra en una sola
+operación. Degradación conocida: si el registro se hizo en otro navegador, el avatar
+muestra la inicial del email.
 
 **Sobre `localStorage`:** es vulnerable a XSS. La alternativa segura es una cookie
 `httpOnly`, pero eso lo tiene que emitir Django y acá no tocamos el backend. Al concentrar

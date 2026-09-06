@@ -4,6 +4,8 @@ import { GridIcon, HomeIcon, UserIcon } from "../ui/icons"
 const TABS = [
   { to: "/", label: "Inicio", Icon: HomeIcon, end: true },
   { to: "/catalogo", label: "Catálogo", Icon: GridIcon },
+  // ponytail: tab "Cuenta" -> /login; con sesión redirige al home. Menú de
+  // cuenta real llega con la feature de compras
   { to: "/login", label: "Cuenta", Icon: UserIcon },
 ]
 
