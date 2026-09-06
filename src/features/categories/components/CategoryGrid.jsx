@@ -2,7 +2,9 @@ import { Link } from "react-router"
 import CategoryCard from "./CategoryCard"
 import { ArrowRightIcon } from "../../../components/ui/icons"
 
-export default function CategoryGrid({ categories }) {
+// `fallback` reemplaza a la grilla mientras no hay categorías que mostrar
+// (cargando, error o lista vacía), sin perder el encabezado ni el ancla.
+export default function CategoryGrid({ categories, fallback }) {
   return (
     <section
       id="categorias"
@@ -26,11 +28,13 @@ export default function CategoryGrid({ categories }) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
-        {categories.map((category) => (
-          <CategoryCard key={category.id} category={category} />
-        ))}
-      </div>
+      {fallback ?? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
+          {categories.map((category) => (
+            <CategoryCard key={category.id} category={category} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

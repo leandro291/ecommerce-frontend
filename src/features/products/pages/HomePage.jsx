@@ -3,32 +3,61 @@ import CategoryGrid from "../../categories/components/CategoryGrid"
 import Hero from "../components/Hero"
 import ProductGrid from "../components/ProductGrid"
 import Button from "../../../components/ui/Button"
+import EmptyState from "../../../components/ui/EmptyState"
+import QueryState from "../../../components/ui/QueryState"
+import { useCategories } from "../../categories/queries/useCategories"
+import { useProducts } from "../queries/useProducts"
 
-// TODO(002): reemplazar por datos de la API
-const CATEGORIES = [
-  { id: 1, name: "Cómputo", slug: "computo", description: "Laptops, monitores y componentes.", is_active: true },
-  { id: 2, name: "Celulares", slug: "celulares", description: "Smartphones libres y accesorios.", is_active: true },
-  { id: 3, name: "Audio", slug: "audio", description: "Audífonos, parlantes y micrófonos.", is_active: true },
-  { id: 4, name: "Hogar", slug: "hogar", description: "Electrodomésticos para la casa.", is_active: true },
-  { id: 5, name: "Accesorios", slug: "accesorios", description: "Teclados, mouses y wearables.", is_active: true },
-  { id: 6, name: "Gaming", slug: "gaming", description: "Periféricos y consolas.", is_active: true },
-]
-
-// TODO(002): reemplazar por datos de la API
-const PRODUCTS = [
-  { id: 1, name: "Audífonos inalámbricos con cancelación de ruido", description: "Cancelación activa de ruido y hasta 30 horas de batería con el estuche.", price: "1299.00", stock: 12, is_active: true, image_url: "", category: { id: 3, name: "Audio", slug: "audio" }, created_at: "2026-08-30T10:00:00Z", updated_at: "2026-08-30T10:00:00Z" },
-  { id: 2, name: 'Laptop ultraligera 14" Ryzen 7 · 16 GB', description: "Chasis de aluminio, 1.2 kg y pantalla mate de 14 pulgadas.", price: "3499.00", stock: 4, is_active: true, image_url: "", category: { id: 1, name: "Cómputo", slug: "computo" }, created_at: "2026-08-28T10:00:00Z", updated_at: "2026-08-28T10:00:00Z" },
-  { id: 3, name: 'Smartphone 6.7" · 256 GB', description: "Pantalla OLED de 120 Hz y triple cámara de 50 MP.", price: "2150.00", stock: 21, is_active: true, image_url: "", category: { id: 2, name: "Celulares", slug: "celulares" }, created_at: "2026-08-26T10:00:00Z", updated_at: "2026-08-26T10:00:00Z" },
-  { id: 4, name: "Cafetera espresso automática", description: "Molinillo integrado y espumador de leche automático.", price: "985.00", stock: 3, is_active: true, image_url: "", category: { id: 4, name: "Hogar", slug: "hogar" }, created_at: "2026-08-24T10:00:00Z", updated_at: "2026-08-24T10:00:00Z" },
-  { id: 5, name: 'Monitor 27" 165 Hz QHD', description: "Panel IPS QHD con 165 Hz y 1 ms de respuesta.", price: "1049.00", stock: 0, is_active: true, image_url: "", category: { id: 1, name: "Cómputo", slug: "computo" }, created_at: "2026-08-22T10:00:00Z", updated_at: "2026-08-22T10:00:00Z" },
-  { id: 6, name: "Teclado mecánico inalámbrico", description: "Switches hot-swap y conexión por Bluetooth o receptor 2.4 GHz.", price: "329.00", stock: 18, is_active: true, image_url: "", category: { id: 5, name: "Accesorios", slug: "accesorios" }, created_at: "2026-08-20T10:00:00Z", updated_at: "2026-08-20T10:00:00Z" },
-]
+// La API no expone `page_size`: se pide la página 1 y se recorta acá.
+const LANDING_ITEMS = 6
 
 export default function HomePage() {
+  const categories = useCategories({ is_active: true, ordering: "name" })
+  const products = useProducts({ is_active: true, ordering: "-created_at" })
+
+  const categoryList = categories.data?.results.slice(0, LANDING_ITEMS) ?? []
+  const productList = products.data?.results.slice(0, LANDING_ITEMS) ?? []
+
+  const categoriesState = {
+    isPending: categories.isPending,
+    isError: categories.isError,
+    error: categories.error,
+    onRetry: () => categories.refetch(),
+    loadingTitle: "Cargando categorías…",
+  }
+  const productsState = {
+    isPending: products.isPending,
+    isError: products.isError,
+    error: products.error,
+    onRetry: () => products.refetch(),
+    loadingTitle: "Cargando productos…",
+  }
+  const noProducts = (
+    <EmptyState
+      title="Todavía no hay productos"
+      description="En cuanto se publique el primero aparece acá."
+    />
+  )
+
   return (
     <>
-      <Hero featured={PRODUCTS[0]} />
-      <CategoryGrid categories={CATEGORIES} />
+      <Hero
+        featured={productList[0]}
+        fallback={<QueryState {...productsState}>{noProducts}</QueryState>}
+      />
+      <CategoryGrid
+        categories={categoryList}
+        fallback={
+          categoryList.length === 0 ? (
+            <QueryState {...categoriesState}>
+              <EmptyState
+                title="Todavía no hay categorías"
+                description="En cuanto se publique la primera aparece acá."
+              />
+            </QueryState>
+          ) : null
+        }
+      />
 
       <section
         id="novedades"
@@ -48,7 +77,13 @@ export default function HomePage() {
           </span>
         </div>
 
-        <ProductGrid products={PRODUCTS} />
+        <QueryState {...productsState}>
+          {productList.length > 0 ? (
+            <ProductGrid products={productList} />
+          ) : (
+            noProducts
+          )}
+        </QueryState>
 
         {/* Texto genérico a propósito: la maqueta hardcodea el conteo
             ("Ver los 9 productos"); acá no se ata a los datos. */}

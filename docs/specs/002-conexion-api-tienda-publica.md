@@ -1,6 +1,6 @@
 # 002 — Conexión de la tienda pública a la API
 
-- **Estado:** Borrador
+- **Estado:** Aprobado (2026-09-06)
 - **Fecha:** 2026-09-06
 - **Módulos de la API:** products, categories (solo lectura)
 
@@ -59,9 +59,15 @@ Cada pantalla dice si está cargando, si falló o si no hay resultados.
 
 ## 3. Contrato de la API
 
-Base: `VITE_API_URL` = `http://localhost:8000/api/v1`. El yaml no declara `servers:` y sus
-paths ya incluyen `/api/v1`, así que el `apiClient` concatena base + `/products/` sin repetir
-el prefijo.
+Base: `VITE_API_URL` (hoy `https://test-back-h6dk.onrender.com/api/v1` en `.env`; el
+`.env.example` usa `http://localhost:8000/api/v1`). El yaml no declara `servers:` y sus paths
+ya incluyen `/api/v1`, así que en código las funciones de `api/` usan `/products/`,
+`/categories/` y el `apiClient` concatena `VITE_API_URL` + ese path.
+
+**Contrato verificado en vivo (2026-09-06)** contra el deploy: `GET /api/v1/products/` y
+`/api/v1/categories/` responden **200 sin token**; forma `{count, next, previous, results:[…]}`;
+`price` llega como string (`"125.00"`); `category` es objeto `{id, name, slug}`; `image_url`,
+`created_at`, `updated_at` presentes. Hoy la base tiene 1 categoría y 1 producto.
 
 | Método | Endpoint | Params / Body | Respuesta |
 |---|---|---|---|
@@ -128,50 +134,50 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   arranca en T6
   para no mover las referencias del resto del documento.
 
-- [ ] **T6 — API de categorías**
+- [x] **T6 — API de categorías**
   - Archivo: `src/features/categories/api/categoriesApi.js`
   - Qué hace: `listCategories(params)` llama a `apiClient('/categories/', { params })`.
     Función async pura, sin React.
   - Hecho cuando: llamada suelta con `{ is_active: true }` devuelve el objeto paginado.
 
-- [ ] **T7 — Query keys de categorías**
+- [x] **T7 — Query keys de categorías**
   - Archivo: `src/features/categories/queries/categoryKeys.js`
   - Qué hace: la factory de `SETUP.md` §7.
   - Hecho cuando: `categoryKeys.list({is_active:true})` devuelve
     `['categories','list',{is_active:true}]`.
 
-- [ ] **T8 — Hook de categorías**
+- [x] **T8 — Hook de categorías**
   - Archivo: `src/features/categories/queries/useCategories.js`
   - Qué hace: `useCategories(filters)` con `queryKey: categoryKeys.list(filters)` y
     `queryFn` que llama a `listCategories`.
   - Hecho cuando: montado en una página devuelve `data.results` con las categorías del
     backend y una sola request en la pestaña Red.
 
-- [ ] **T9 — API de productos**
+- [x] **T9 — API de productos**
   - Archivo: `src/features/products/api/productsApi.js`
   - Qué hace: `listProducts(params)` sobre `/products/` y `getProduct(id)` sobre
     `/products/{id}/`.
   - Hecho cuando: ambas funciones devuelven el JSON del backend y propagan el `ApiError`.
 
-- [ ] **T10 — Query keys de productos**
+- [x] **T10 — Query keys de productos**
   - Archivo: `src/features/products/queries/productKeys.js`
   - Qué hace: misma factory que T7 con raíz `['products']`.
   - Hecho cuando: `productKeys.detail(7)` devuelve `['products','detail',7]`.
 
-- [ ] **T11 — Hook de lista de productos**
+- [x] **T11 — Hook de lista de productos**
   - Archivo: `src/features/products/queries/useProducts.js`
   - Qué hace: `useProducts(filters, options)` con `placeholderData: keepPreviousData` y
     reenvío de `enabled` (lo necesitan los relacionados de la ficha).
   - Hecho cuando: al pasar de página la grilla anterior queda visible hasta que llega la
     nueva, sin salto a estado de carga.
 
-- [ ] **T12 — Hook de detalle de producto**
+- [x] **T12 — Hook de detalle de producto**
   - Archivo: `src/features/products/queries/useProduct.js`
   - Qué hace: `useProduct(id)` con `queryKey: productKeys.detail(id)`, `enabled` solo si hay
     `id`.
   - Hecho cuando: `/productos/1` dispara exactamente una request a `/products/1/`.
 
-- [ ] **T13 — Home conectada**
+- [x] **T13 — Home conectada**
   - Archivo: `src/features/products/pages/HomePage.jsx`
   - Qué hace: elimina los dos arrays de muestra. Categorías con
     `useCategories({ is_active: true, ordering: 'name' })` recortadas a 6; novedades con
@@ -182,7 +188,7 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: con el backend arriba, `/` muestra categorías y productos reales y ningún
     literal de muestra queda en el archivo.
 
-- [ ] **T14 — Catálogo: filtros en la URL**
+- [x] **T14 — Catálogo: filtros en la URL**
   - Archivo: `src/features/products/pages/CatalogPage.jsx`
   - Qué hace: lee `search`, `category`, `price_min`, `price_max`, `in_stock`, `ordering`,
     `page` de `useSearchParams` y arma con ellos el objeto de filtros que va a `useProducts`
@@ -191,7 +197,7 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: entrar a `/catalogo?search=mouse&ordering=price` dispara una sola request
     con esos query params y recargar la página conserva el resultado.
 
-- [ ] **T15 — Catálogo: grilla, contador y estados**
+- [x] **T15 — Catálogo: grilla, contador y estados**
   - Archivo: `src/features/products/pages/CatalogPage.jsx`
   - Qué hace: `ProductGrid` con `data.results`, `ResultsToolbar total={data.count}`, y los
     tres estados: cargando, error con "Reintentar", y `EmptyState` "Ningún producto coincide"
@@ -199,14 +205,14 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: una búsqueda sin resultados muestra el `EmptyState` real y el botón vacía
     los filtros de la URL.
 
-- [ ] **T16 — Catálogo: categorías reales en el sidebar y en los chips**
+- [x] **T16 — Catálogo: categorías reales en el sidebar y en los chips**
   - Archivo: `src/features/products/pages/CatalogPage.jsx`
   - Qué hace: `useCategories({ is_active: true, ordering: 'name' })` alimenta
     `FilterSidebar` y `CategoryChips`; mientras carga, ambos reciben lista vacía.
   - Hecho cuando: las categorías del sidebar coinciden con las del backend y ningún array de
     muestra queda en el archivo.
 
-- [ ] **T17 — FilterSidebar aplicable**
+- [x] **T17 — FilterSidebar aplicable**
   - Archivo: `src/features/products/components/FilterSidebar.jsx`
   - Qué hace: el `<aside>` pasa a contener un `<form>`; cada control toma su valor inicial de
     los filtros vigentes; radios y switch aplican en su `onChange`; búsqueda y precios aplican
@@ -215,13 +221,13 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
     actualiza sin recargar; escribir en la búsqueda no dispara requests hasta salir del campo
     o apretar Enter.
 
-- [ ] **T18 — Chips de categoría con selección real**
+- [x] **T18 — Chips de categoría con selección real**
   - Archivo: `src/features/categories/components/CategoryChips.jsx`
   - Qué hace: props `activeId` y `onSelect(id)`; "Todo" es `onSelect(null)`; el resaltado sale
     de `activeId`, no de una constante.
   - Hecho cuando: en móvil, tocar un chip pone `?category=<id>` en la URL y lo deja marcado.
 
-- [ ] **T19 — Chips de filtros activos removibles**
+- [x] **T19 — Chips de filtros activos removibles**
   - Archivo: `src/features/products/components/ActiveFilters.jsx` y `ResultsToolbar.jsx`
   - Qué hace: `ActiveFilters` recibe `filters: [{ key, label }]` y `onRemove(key)`; la "x"
     pasa a `<button>` con `aria-label`. `ResultsToolbar` solo los propaga. La lista de chips
@@ -230,14 +236,14 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: con dos filtros puestos aparecen dos chips y hacer clic en la "x" de uno
     quita solo ese parámetro de la URL.
 
-- [ ] **T20 — Orden conectado**
+- [x] **T20 — Orden conectado**
   - Archivo: `src/features/products/components/ResultsToolbar.jsx`
   - Qué hace: el `<select>` pasa a controlado (`value={ordering}` + `onOrderingChange`), con
     las mismas cuatro opciones.
   - Hecho cuando: elegir "Precio: de menor a mayor" pone `?ordering=price` y la grilla llega
     ordenada desde el backend.
 
-- [ ] **T21 — Paginación conectada**
+- [x] **T21 — Paginación conectada**
   - Archivo: `src/features/products/pages/CatalogPage.jsx`
   - Qué hace: las flechas pasan a `<button>` que suman/restan `page` en la URL; se
     deshabilitan según `previous` / `next` de la respuesta; el pill muestra la página actual y
@@ -245,7 +251,7 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: en la última página la flecha derecha está deshabilitada
     (`disabled` + `aria-disabled`) y "atrás" del navegador vuelve a la página anterior.
 
-- [ ] **T22 — Ficha de producto conectada**
+- [x] **T22 — Ficha de producto conectada**
   - Archivo: `src/features/products/pages/ProductDetailPage.jsx`
   - Qué hace: `useProduct(id)` reemplaza al array de muestra. Cargando → `EmptyState`
     "Cargando…"; `error.status === 404` → `EmptyState` "No encontramos ese producto" con
@@ -253,7 +259,7 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: `/productos/999999` muestra el aviso de no encontrado (no el primer
     producto) y `/productos/1` muestra el producto real con su breadcrumb.
 
-- [ ] **T23 — Relacionados de la ficha**
+- [x] **T23 — Relacionados de la ficha**
   - Archivo: `src/features/products/pages/ProductDetailPage.jsx`
   - Qué hace: `useProducts({ category: product.category.id, is_active: true }, { enabled })`
     con `enabled` atado a que el producto ya esté cargado; se excluye el producto actual y se
@@ -261,7 +267,7 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
   - Hecho cuando: la sección "Más de <categoría>" muestra productos de esa categoría y nunca
     el que se está viendo.
 
-- [ ] **T24 — Lupa del Header**
+- [x] **T24 — Lupa del Header**
   - Archivo: `src/components/layout/Header.jsx`
   - Qué hace: el `<button>` sin handler pasa a `<Link to="/catalogo">` con
     `aria-label="Buscar en el catálogo"` y el mismo estilo/anillo de foco.
@@ -269,26 +275,26 @@ el `QueryClient`) **no aparecen en esta tabla**: los provee el spec 003, ya ejec
 
 ## 6. Criterios de aceptación
 
-- [ ] `npm run build` pasa sin errores.
-- [ ] `npm run lint` pasa sin errores nuevos.
-- [ ] No queda ningún array de datos de muestra ni comentario `TODO(002)` en
+- [x] `npm run build` pasa sin errores.
+- [x] `npm run lint` pasa sin errores nuevos.
+- [x] No queda ningún array de datos de muestra ni comentario `TODO(002)` en
       `HomePage.jsx`, `CatalogPage.jsx` ni `ProductDetailPage.jsx`.
-- [ ] Ningún componente ni página importa `fetch`, `apiClient` o `features/*/api/`
+- [x] Ningún componente ni página importa `fetch`, `apiClient` o `features/*/api/`
       directamente: el camino es página/componente → `queries/` → `api/` → `apiClient`.
-- [ ] Ningún `useEffect` trae datos del servidor.
-- [ ] Las tres pantallas cubren carga, error (con "Reintentar" que vuelve a pedir) y vacío.
+- [x] Ningún `useEffect` trae datos del servidor.
+- [x] Las tres pantallas cubren carga, error (con "Reintentar" que vuelve a pedir) y vacío.
 - [ ] La grilla del catálogo cambia al mover cualquier filtro, el orden o la página, sin
       recargar la página; la URL refleja siempre el estado y es compartible.
-- [ ] Todos los query params enviados existen en `docs/ecommerce-api.yaml` para ese endpoint:
+- [x] Todos los query params enviados existen en `docs/ecommerce-api.yaml` para ese endpoint:
       `search`, `category`, `price_min`, `price_max`, `in_stock`, `is_active`, `ordering`,
       `page`. No se manda ningún parámetro vacío.
 - [ ] `/productos/<id-inexistente>` muestra el aviso de no encontrado, no otro producto.
 - [ ] Un 4xx no se reintenta (se ve una sola request en la pestaña Red).
 - [ ] Cambiar de página no vacía la grilla: se mantiene la anterior hasta que llega la nueva.
-- [ ] Los precios se siguen mostrando con `formatPrice` a partir del `price` string; no hay
+- [x] Los precios se siguen mostrando con `formatPrice` a partir del `price` string; no hay
       aritmética con `price`.
-- [ ] `SETUP.md` no fue modificado y no se creó ninguna carpeta fuera de su estructura.
-- [ ] No se agregaron dependencias a `package.json`.
+- [x] `SETUP.md` no fue modificado y no se creó ninguna carpeta fuera de su estructura.
+- [x] No se agregaron dependencias a `package.json`.
 
 ## 7. Preguntas abiertas
 

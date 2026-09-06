@@ -1,40 +1,77 @@
+import { useSearchParams } from "react-router"
 import Breadcrumbs from "../../../components/ui/Breadcrumbs"
 import Button from "../../../components/ui/Button"
 import EmptyState from "../../../components/ui/EmptyState"
+import QueryState from "../../../components/ui/QueryState"
 import { ArrowRightIcon } from "../../../components/ui/icons"
 import CategoryChips from "../../categories/components/CategoryChips"
+import { useCategories } from "../../categories/queries/useCategories"
 import FilterSidebar from "../components/FilterSidebar"
 import ProductGrid from "../components/ProductGrid"
 import ResultsToolbar from "../components/ResultsToolbar"
+import { useProducts } from "../queries/useProducts"
+import { formatPrice } from "../../../utils/formatPrice"
 
-// TODO(002): reemplazar por datos de la API
-const CATEGORIES = [
-  { id: 1, name: "Cómputo", slug: "computo", description: "Laptops, monitores y componentes.", is_active: true },
-  { id: 2, name: "Celulares", slug: "celulares", description: "Smartphones libres y accesorios.", is_active: true },
-  { id: 3, name: "Audio", slug: "audio", description: "Audífonos, parlantes y micrófonos.", is_active: true },
-  { id: 4, name: "Hogar", slug: "hogar", description: "Electrodomésticos para la casa.", is_active: true },
-  { id: 5, name: "Accesorios", slug: "accesorios", description: "Teclados, mouses y wearables.", is_active: true },
-  { id: 6, name: "Gaming", slug: "gaming", description: "Periféricos y consolas.", is_active: true },
-]
-
-// TODO(002): reemplazar por datos de la API
-const PRODUCTS = [
-  { id: 1, name: "Audífonos inalámbricos con cancelación de ruido", description: "Cancelación activa de ruido y hasta 30 horas de batería con el estuche.", price: "1299.00", stock: 12, is_active: true, image_url: "", category: { id: 3, name: "Audio", slug: "audio" }, created_at: "2026-08-30T10:00:00Z", updated_at: "2026-08-30T10:00:00Z" },
-  { id: 2, name: 'Laptop ultraligera 14" Ryzen 7 · 16 GB', description: "Chasis de aluminio, 1.2 kg y pantalla mate de 14 pulgadas.", price: "3499.00", stock: 4, is_active: true, image_url: "", category: { id: 1, name: "Cómputo", slug: "computo" }, created_at: "2026-08-28T10:00:00Z", updated_at: "2026-08-28T10:00:00Z" },
-  { id: 3, name: 'Smartphone 6.7" · 256 GB', description: "Pantalla OLED de 120 Hz y triple cámara de 50 MP.", price: "2150.00", stock: 21, is_active: true, image_url: "", category: { id: 2, name: "Celulares", slug: "celulares" }, created_at: "2026-08-26T10:00:00Z", updated_at: "2026-08-26T10:00:00Z" },
-  { id: 4, name: "Cafetera espresso automática", description: "Molinillo integrado y espumador de leche automático.", price: "985.00", stock: 3, is_active: true, image_url: "", category: { id: 4, name: "Hogar", slug: "hogar" }, created_at: "2026-08-24T10:00:00Z", updated_at: "2026-08-24T10:00:00Z" },
-  { id: 5, name: 'Monitor 27" 165 Hz QHD', description: "Panel IPS QHD con 165 Hz y 1 ms de respuesta.", price: "1049.00", stock: 0, is_active: true, image_url: "", category: { id: 1, name: "Cómputo", slug: "computo" }, created_at: "2026-08-22T10:00:00Z", updated_at: "2026-08-22T10:00:00Z" },
-  { id: 6, name: "Teclado mecánico inalámbrico", description: "Switches hot-swap y conexión por Bluetooth o receptor 2.4 GHz.", price: "329.00", stock: 18, is_active: true, image_url: "", category: { id: 5, name: "Accesorios", slug: "accesorios" }, created_at: "2026-08-20T10:00:00Z", updated_at: "2026-08-20T10:00:00Z" },
-  { id: 7, name: "Parlante portátil resistente al agua", description: "Certificación IP67 y 20 horas de reproducción continua.", price: "459.00", stock: 9, is_active: true, image_url: "", category: { id: 3, name: "Audio", slug: "audio" }, created_at: "2026-08-18T10:00:00Z", updated_at: "2026-08-18T10:00:00Z" },
-  { id: 8, name: "Robot aspirador con mapeo láser", description: "Mapeo LiDAR, vaciado automático y control por app.", price: "1590.00", stock: 2, is_active: true, image_url: "", category: { id: 4, name: "Hogar", slug: "hogar" }, created_at: "2026-08-16T10:00:00Z", updated_at: "2026-08-16T10:00:00Z" },
-  { id: 9, name: "Mouse gamer 26K DPI", description: "Sensor óptico de 26.000 DPI y 60 g de peso.", price: "189.00", stock: 33, is_active: true, image_url: "", category: { id: 6, name: "Gaming", slug: "gaming" }, created_at: "2026-08-14T10:00:00Z", updated_at: "2026-08-14T10:00:00Z" },
-]
-
-// El catálogo todavía no filtra. Este flag deja el EmptyState renderizado para
-// que el spec 002 lo enganche al estado "sin resultados".
-const SHOW_EMPTY = false
+const DEFAULT_ORDERING = "-created_at"
+const PAGE_BUTTON =
+  "flex h-11 w-11 items-center justify-center rounded-full border border-line-2 text-fg-soft transition hover:border-acc hover:text-acc focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc disabled:cursor-not-allowed disabled:border-line-2 disabled:text-line-hover disabled:hover:border-line-2"
 
 export default function CatalogPage() {
+  // La URL es el único estado de los filtros: compartir el link reproduce la
+  // búsqueda y "atrás" del navegador funciona solo.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const search = searchParams.get("search") ?? ""
+  const category = searchParams.get("category") ?? ""
+  const priceMin = searchParams.get("price_min") ?? ""
+  const priceMax = searchParams.get("price_max") ?? ""
+  const inStock = searchParams.get("in_stock") ?? ""
+  const ordering = searchParams.get("ordering") ?? DEFAULT_ORDERING
+  const page = Number(searchParams.get("page")) || 1
+
+  const applyFilters = (patch) => {
+    const next = new URLSearchParams(searchParams)
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === null || value === undefined || value === "") next.delete(key)
+      else next.set(key, String(value))
+    }
+    // Nada cambió: salir de un campo sin tocarlo no resetea la página ni
+    // ensucia el historial con una entrada idéntica. Va antes del delete de
+    // `page`, si no ese borrado hace que los strings difieran siempre.
+    if (next.toString() === searchParams.toString()) return
+    // Cambiar cualquier filtro u orden vuelve a la primera página.
+    if (!("page" in patch)) next.delete("page")
+    setSearchParams(next)
+  }
+  const clearFilters = () => setSearchParams(new URLSearchParams())
+
+  // La tienda pública solo muestra lo publicado. Los vacíos no se mandan.
+  const products = useProducts({
+    is_active: true,
+    ordering,
+    page,
+    search: search || undefined,
+    category: category || undefined,
+    price_min: priceMin || undefined,
+    price_max: priceMax || undefined,
+    in_stock: inStock || undefined,
+  })
+  const categories = useCategories({ is_active: true, ordering: "name" })
+
+  const categoryList = categories.data?.results ?? []
+  const results = products.data?.results ?? []
+  const count = products.data?.count ?? 0
+
+  const categoryName = categoryList.find(
+    (item) => String(item.id) === category,
+  )?.name
+  const activeFilters = [
+    search && { key: "search", label: `Búsqueda: ${search}` },
+    category && { key: "category", label: categoryName ?? `Categoría ${category}` },
+    priceMin && { key: "price_min", label: `Desde ${formatPrice(priceMin)}` },
+    priceMax && { key: "price_max", label: `Hasta ${formatPrice(priceMax)}` },
+    inStock === "true" && { key: "in_stock", label: "Solo con stock" },
+  ].filter(Boolean)
+
   return (
     <div className="mx-auto max-w-[1360px] px-5 py-10 md:px-10 md:pb-20">
       <Breadcrumbs
@@ -47,48 +84,91 @@ export default function CatalogPage() {
 
       <div className="md:grid md:grid-cols-[280px_minmax(0,1fr)] md:items-start md:gap-10">
         <div className="mb-8 md:hidden">
-          <CategoryChips categories={CATEGORIES} />
+          <CategoryChips
+            categories={categoryList}
+            activeId={category}
+            onSelect={(id) => applyFilters({ category: id })}
+          />
         </div>
         <div className="hidden md:block">
-          <FilterSidebar categories={CATEGORIES} />
+          <FilterSidebar
+            categories={categoryList}
+            values={{
+              search,
+              category,
+              price_min: priceMin,
+              price_max: priceMax,
+              in_stock: inStock,
+            }}
+            onApply={applyFilters}
+            onClear={clearFilters}
+          />
         </div>
 
         <div>
-          <ResultsToolbar total={PRODUCTS.length} filters={[]} />
+          <ResultsToolbar
+            total={count}
+            filters={activeFilters}
+            onRemoveFilter={(key) => applyFilters({ [key]: "" })}
+            ordering={ordering}
+            onOrderingChange={(value) => applyFilters({ ordering: value })}
+          />
 
-          {SHOW_EMPTY ? (
-            <EmptyState
-              title="Ningún producto coincide"
-              description="Probá con menos filtros o revisá la búsqueda."
-              action={<Button>Limpiar filtros</Button>}
-            />
-          ) : (
-            <ProductGrid products={PRODUCTS} />
-          )}
+          <QueryState
+            isPending={products.isPending}
+            isError={products.isError}
+            error={products.error}
+            onRetry={() => products.refetch()}
+            loadingTitle="Cargando productos…"
+          >
+            {results.length > 0 ? (
+              <ProductGrid products={results} />
+            ) : (
+              <EmptyState
+                title="Ningún producto coincide"
+                description="Probá con menos filtros o revisá la búsqueda."
+                action={<Button onClick={clearFilters}>Limpiar filtros</Button>}
+              />
+            )}
+          </QueryState>
 
-          {/* Paginación estática (markup). El spec 002 la conecta a ?page= */}
-          <div className="mt-9 flex items-center justify-between">
-            <span className="text-sm text-faint">
-              1-{PRODUCTS.length} de {PRODUCTS.length}
-            </span>
-            <div className="flex items-center gap-2.5">
-              <span
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-line-2 text-line-hover"
-                aria-hidden="true"
-              >
-                <ArrowRightIcon className="h-4 w-4 rotate-180" />
-              </span>
-              <span className="flex h-11 min-w-11 items-center justify-center rounded-full border border-acc bg-acc px-1 text-[15px] font-semibold text-bg">
-                1
-              </span>
-              <span
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-line-2 text-fg-soft"
-                aria-hidden="true"
-              >
-                <ArrowRightIcon className="h-4 w-4" />
-              </span>
+          {/* La API no devuelve el total de páginas: las flechas se habilitan
+              con `next` / `previous` y el pill muestra la página actual. */}
+          {count > 0 && (
+            <div className="mt-9 flex items-center justify-between">
+              <span className="text-sm text-faint">{count} resultados</span>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  aria-label="Página anterior"
+                  disabled={!products.data?.previous}
+                  aria-disabled={!products.data?.previous}
+                  onClick={() =>
+                    applyFilters({ page: page - 1 > 1 ? page - 1 : "" })
+                  }
+                  className={PAGE_BUTTON}
+                >
+                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                </button>
+                <span
+                  aria-current="page"
+                  className="flex h-11 min-w-11 items-center justify-center rounded-full border border-acc bg-acc px-1 text-[15px] font-semibold text-bg"
+                >
+                  {page}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Página siguiente"
+                  disabled={!products.data?.next}
+                  aria-disabled={!products.data?.next}
+                  onClick={() => applyFilters({ page: page + 1 })}
+                  className={PAGE_BUTTON}
+                >
+                  <ArrowRightIcon className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

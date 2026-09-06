@@ -4,8 +4,9 @@ import FeaturedProduct from "./FeaturedProduct"
 import { ArrowRightIcon } from "../../../components/ui/icons"
 
 // Bloque de marketing del landing. Textos fijos; la bajada entre corchetes es
-// un placeholder a reemplazar. `featured` es el producto de muestra destacado.
-export default function Hero({ featured }) {
+// un placeholder a reemplazar. `featured` es el producto destacado; mientras no
+// haya uno (cargando, error o catálogo vacío) se muestra `fallback` en su lugar.
+export default function Hero({ featured, fallback }) {
   return (
     <section className="mx-auto grid max-w-[1280px] items-center gap-8 px-5 pb-12 pt-10 md:grid-cols-12 md:px-10 md:pb-24 md:pt-[72px]">
       <div className="md:col-span-7">
@@ -30,7 +31,7 @@ export default function Hero({ featured }) {
       </div>
 
       <div className="md:col-span-5">
-        <FeaturedProduct product={featured} />
+        {featured ? <FeaturedProduct product={featured} /> : fallback}
       </div>
     </section>
   )

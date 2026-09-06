@@ -45,13 +45,14 @@ export default function Header() {
 
         <div className="grow" />
 
-        <button
-          type="button"
-          aria-label="Buscar"
-          className="flex h-11 w-11 items-center justify-center text-icon transition hover:text-acc md:h-auto md:w-auto"
+        {/* El buscador vive en los filtros del catálogo: la lupa lleva ahí. */}
+        <Link
+          to="/catalogo"
+          aria-label="Buscar en el catálogo"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-icon transition hover:text-acc focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc md:h-auto md:w-auto"
         >
           <SearchIcon className="h-5 w-5" />
-        </button>
+        </Link>
         <AccountMenu />
       </div>
     </header>
