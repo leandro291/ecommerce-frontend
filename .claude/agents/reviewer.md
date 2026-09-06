@@ -55,6 +55,11 @@ grep -rln "\.tsx\?$" src/ ; find src -name "*.ts" -o -name "*.tsx"   # debe esta
 - [ ] No se envían campos `readOnly` (`user_count`, `created_at`, `updated_at`, `id`)
 - [ ] Las respuestas 204 no se intentan parsear como JSON
 - [ ] Las listas se leen desde `results`, y `count` se usa para la paginación
+- [ ] El login envía `email`, no `username`
+- [ ] El registro envía `password2` y **no** envía `role`
+- [ ] Los tokens se leen y escriben solo desde `lib/tokenStore.js`
+- [ ] El refresh ante 401 se intenta una sola vez y está deduplicado entre peticiones paralelas
+- [ ] Al cerrar sesión se limpian los tokens **y** el cache de TanStack Query
 
 ### UI
 - [ ] Están cubiertos los cuatro estados: pending, error, vacío, datos

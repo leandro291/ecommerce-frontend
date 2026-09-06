@@ -115,13 +115,28 @@ negocio, no con qué librería está hecho.
     │
     ├── app/
     │   ├── router.jsx           # Definición de rutas (React Router)
-    │   └── queryClient.js       # QueryClient con sus defaultOptions
+    │   ├── queryClient.js       # QueryClient con sus defaultOptions
+    │   └── ProtectedRoute.jsx   # Guarda: sin sesión, redirige a /login
     │
     ├── lib/
-    │   ├── apiClient.js         # Wrapper de fetch: base URL, JWT, errores, query params
-    │   └── ApiError.js          # Error tipado con status y detalle del backend
+    │   ├── apiClient.js         # Wrapper de fetch: base URL, JWT, refresh, errores, params
+    │   ├── ApiError.js          # Error tipado con status y detalle del backend
+    │   └── tokenStore.js        # Único lugar que lee/escribe los tokens
     │
     ├── features/                # UN DIRECTORIO POR MÓDULO DE LA API
+    │   ├── auth/
+    │   │   ├── api/
+    │   │   │   └── authApi.js        # login, register, refresh
+    │   │   ├── queries/
+    │   │   │   ├── useLogin.js
+    │   │   │   ├── useRegister.js
+    │   │   │   └── useSession.js     # sesión actual derivada del token
+    │   │   ├── components/
+    │   │   │   ├── LoginForm.jsx
+    │   │   │   └── RegisterForm.jsx
+    │   │   └── pages/
+    │   │       ├── LoginPage.jsx
+    │   │       └── RegisterPage.jsx
     │   ├── categories/
     │   │   ├── api/             # Funciones puras que hablan con la API
     │   │   │   └── categoriesApi.js
@@ -137,7 +152,7 @@ negocio, no con qué librería está hecho.
     │   │       └── CategoryDetailPage.jsx
     │   ├── products/            # misma estructura interna
     │   ├── roles/               # misma estructura interna
-    │   └── users/               # PENDIENTE: falta el spec en el yaml
+    │   └── users/               # PENDIENTE: el CRUD de users no está en el yaml
     │
     ├── components/              # Compartido entre 2+ features
     │   ├── ui/                  # Button, Input, Modal, Badge, Spinner...
@@ -173,9 +188,13 @@ negocio, no con qué librería está hecho.
 Único punto donde se habla HTTP. Responsabilidades:
 
 - Prefijar `VITE_API_URL`.
-- Adjuntar `Authorization: Bearer <access>` (SimpleJWT).
-- Al recibir 401, intentar una vez el refresh contra `/token/refresh/` y reintentar; si
-  falla, limpiar la sesión.
+- Adjuntar `Authorization: Bearer <access>` (SimpleJWT), salvo en los endpoints públicos
+  de `auth/`.
+- Al recibir 401, intentar **una** vez el refresh contra `POST /auth/refresh/` y reintentar
+  la petición original; si el refresh falla, limpiar la sesión y redirigir a `/login`.
+- Deduplicar el refresh: si llegan varios 401 en paralelo, se dispara un solo refresh y las
+  demás peticiones esperan esa misma promesa. Si no, cinco requests simultáneas queman el
+  refresh token cuatro veces.
 - Serializar query params (los filtros del yaml: `search`, `ordering`, `page`, `is_active`,
   `category`, `price_min`, `price_max`, `in_stock`, `code`, `name`).
 - Convertir cualquier respuesta no-ok en un `ApiError` con `status` y el detalle del backend.
@@ -218,20 +237,64 @@ export const categoryKeys = {
 Tras una mutación se invalida el nivel más chico que alcance: crear o borrar invalida
 `lists()`; editar invalida `detail(id)` y `lists()`.
 
+### `lib/tokenStore.js`
+
+Único módulo que toca el almacenamiento de tokens. Nadie más lee ni escribe esas claves.
+
+```js
+const ACCESS = 'ecommerce.access'
+const REFRESH = 'ecommerce.refresh'
+
+export const tokenStore = {
+  get access() { return localStorage.getItem(ACCESS) },
+  get refresh() { return localStorage.getItem(REFRESH) },
+  save({ access, refresh }) { /* guarda las que vengan */ },
+  clear() { localStorage.removeItem(ACCESS); localStorage.removeItem(REFRESH) },
+}
+```
+
+**Sobre `localStorage`:** es vulnerable a XSS. La alternativa segura es una cookie
+`httpOnly`, pero eso lo tiene que emitir Django y acá no tocamos el backend. Al concentrar
+el acceso en este módulo, migrar a cookies el día que el backend lo soporte es cambiar un
+archivo. Contrapartida: no meter jamás HTML sin sanitizar en el DOM (`dangerouslySetInnerHTML`).
+
+Al cerrar sesión: `tokenStore.clear()` **y** `queryClient.clear()`. Si no vaciás el cache,
+el próximo usuario que entre ve los datos del anterior durante el primer render.
+
 ---
 
 ## 8. Mapa de la API
 
-Base: `VITE_API_URL` (`http://localhost:8000/api/v1`). Todos los endpoints exigen
-`Authorization: Bearer <token>`. Las listas vienen paginadas:
+Base: `VITE_API_URL` (`http://localhost:8000/api/v1`). Los endpoints de negocio exigen
+`Authorization: Bearer <access>`; los de `auth/` son públicos. Las listas vienen paginadas:
 `{ count, next, previous, results }`.
 
 | Recurso | Endpoints | Filtros de la lista |
 |---|---|---|
+| **auth** | `POST /auth/login/` · `POST /auth/refresh/` · `POST /auth/register/` | — |
 | **categories** | `GET/POST /categories/` · `GET/PUT/PATCH/DELETE /categories/{id}/` | `is_active`, `name`, `search`, `ordering`, `page` |
 | **products** | `GET/POST /products/` · `GET/PUT/PATCH/DELETE /products/{id}/` | `category`, `in_stock`, `is_active`, `price_min`, `price_max`, `search`, `ordering`, `page` |
 | **roles** | `GET/POST /roles/` · `GET/PUT/PATCH/DELETE /roles/{id}/` | `code`, `name`, `search`, `ordering`, `page` |
 | **users** | — | **Pendiente: no está en el yaml** |
+
+### Auth (SimpleJWT)
+
+| Endpoint | Envía | Recibe |
+|---|---|---|
+| `POST /auth/login/` | `{ email, password }` | `{ access, refresh }` |
+| `POST /auth/refresh/` | `{ refresh }` | `{ access }` |
+| `POST /auth/register/` | `{ email, username, password, password2, first_name?, last_name? }` | `{ id, email, username, first_name, last_name, role }` |
+
+- **El login es por `email`, no por `username`.** Es un SimpleJWT customizado: el campo del
+  formulario va con `type="email"` y `autoComplete="email"`.
+- **`username` sí se pide en el registro**, y es obligatorio. Debe cumplir `^[\w.@+-]+$`,
+  máximo 150 caracteres. O sea: te registrás con usuario y email, pero entrás con el email.
+- **`password2` es obligatorio** en el registro. La coincidencia se valida también en el
+  cliente con `setCustomValidity`, para no gastar un viaje al servidor por un typo.
+- **`role` es de solo lectura.** El backend asigna el rol por defecto; no mandarlo nunca.
+- **El refresh solo devuelve `access`.** El `refresh` token guardado no se reemplaza.
+- **Los errores 400 del registro vienen por campo** (`{ "email": ["..."], "password": [...] }`).
+  Mostrarlos junto a su input, no como un cartel genérico arriba.
 
 ### Detalles del contrato que importan al construir la UI
 
